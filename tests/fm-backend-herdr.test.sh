@@ -3463,6 +3463,26 @@ test_projection_label_builder_uses_corner_and_strips_owner_prefixes() {
   pass "herdr presentation labels: └ concise-task · p:<full-token> for primary and secondmate children"
 }
 
+test_projection_label_carries_crew_name_and_legacy_labels_still_match() {
+  local token named
+  token='AbCdEfGhIjKlMnOpQrStUv'
+  named=$(bash -c '. "$0/bin/backends/herdr.sh"; fm_backend_herdr_projection_workspace_label fm-task-p2 "$1" "Captain Nemo"' "$ROOT" "$token")
+  [ "$named" = "└ Captain Nemo · task-p2 · p:$token" ] || fail "named child label was wrong: $named"
+  bash -c '. "$0/bin/backends/herdr.sh"; fm_backend_herdr_projection_workspace_label_matches "$1" task-p2 "$2"' \
+    "$ROOT" "$named" "$token" || fail "named label did not match its task"
+  bash -c '. "$0/bin/backends/herdr.sh"; fm_backend_herdr_projection_workspace_label_matches "$1" task-p2 "$2"' \
+    "$ROOT" "└ task-p2 · p:$token" "$token" || fail "legacy unnamed label stopped matching"
+  if bash -c '. "$0/bin/backends/herdr.sh"; fm_backend_herdr_projection_workspace_label_matches "$1" task-p2 "$2"' \
+    "$ROOT" "└ Nemo · other-task · p:$token" "$token"; then
+    fail "a label for another task matched"
+  fi
+  if bash -c '. "$0/bin/backends/herdr.sh"; fm_backend_herdr_projection_workspace_label_matches "$1" task-p2 "$2"' \
+    "$ROOT" "└  · task-p2 · p:$token" "$token"; then
+    fail "an empty crew name matched"
+  fi
+  pass "herdr presentation labels: crew name shown, legacy labels still verify, other tasks refused"
+}
+
 test_projection_order_moves_only_exact_new_workspace_and_preserves_relative_order() {
   local dir log resp fb mover mover_log out status
   dir="$TMP_ROOT/projection-order"; mkdir -p "$dir/responses"
@@ -6658,6 +6678,7 @@ test_endpoint_confirmed_gone_gates_on_structured_presence
 test_kill_refuses_when_presentation_lock_is_unavailable
 test_projection_seeded_prune_refuses_active_tab
 test_projection_label_builder_uses_corner_and_strips_owner_prefixes
+test_projection_label_carries_crew_name_and_legacy_labels_still_match
 test_projection_order_moves_only_exact_new_workspace_and_preserves_relative_order
 test_projection_order_secondmate_parent_block
 test_projection_order_group_key_places_new_task_inside_its_group

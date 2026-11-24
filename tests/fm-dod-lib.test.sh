@@ -721,6 +721,17 @@ test_worker_role_names_skill_and_fallback_file() {
   pass "worker role names the skill and its fallback skill file"
 }
 
+test_worker_role_names_the_crew_name_only_when_given() {
+  local role_file
+  role_file="$TMP_ROOT/worker-role-crew.txt"
+  fm_brief_worker_role "$TMP_ROOT/state" crew-1 "$ROOT" "Anne Bonny" >"$role_file"
+  assert_grep "Your crew name is Anne Bonny;" "$role_file" "worker role did not name the crew name"
+  assert_grep "keep using the task id \`crew-1\`" "$role_file" "worker role did not keep the task id authoritative"
+  fm_brief_worker_role "$TMP_ROOT/state" crew-1 "$ROOT" >"$role_file"
+  assert_no_grep "crew name" "$role_file" "worker role named a crew name when none was given"
+  pass "worker role names the crew name only when one is recorded"
+}
+
 # forge=external: a review tool uploads its own snapshot, so nothing is pushed.
 # The fixtures name an invented tool and an RFC 6761 reserved host only.
 EXT_CFG="$TMP_ROOT/external-config"
@@ -831,5 +842,6 @@ test_external_review_done_without_backup_is_accepted_on_the_url
 test_external_review_done_with_backup_needs_the_copy
 
 test_worker_role_names_skill_and_fallback_file
+test_worker_role_names_the_crew_name_only_when_given
 
 echo "all fm-dod-lib tests passed"

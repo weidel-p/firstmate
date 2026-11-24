@@ -615,7 +615,7 @@ fm_backend_herdr_projection_journal_field() {  # <journal> <key>
 # journal or a version 2 exact projection binding without sourcing shell code.
 # Version 2 sets FM_BACKEND_HERDR_JOURNAL_* globals for same-process callers.
 fm_backend_herdr_projection_journal_snapshot() {  # <journal> <task-id>
-  local journal=$1 id=$2 lines expected_label expected_task_label exact
+  local journal=$1 id=$2 lines expected_task_label exact
   FM_BACKEND_HERDR_JOURNAL_VERSION=""
   FM_BACKEND_HERDR_JOURNAL_TASK_ID=""
   FM_BACKEND_HERDR_JOURNAL_PROJECTION_ID=""
@@ -669,9 +669,9 @@ fm_backend_herdr_projection_journal_snapshot() {  # <journal> <task-id>
   [ -n "$FM_BACKEND_HERDR_JOURNAL_PARENT_LABEL" ] \
     && [ -n "$FM_BACKEND_HERDR_JOURNAL_WORKSPACE_LABEL" ] \
     && [ -n "$FM_BACKEND_HERDR_JOURNAL_TASK_LABEL" ] || return 1
-  expected_label=$(fm_backend_herdr_projection_workspace_label "$id" "$FM_BACKEND_HERDR_JOURNAL_PROJECTION_ID")
   expected_task_label="fm-$id"
-  [ "$FM_BACKEND_HERDR_JOURNAL_WORKSPACE_LABEL" = "$expected_label" ] \
+  fm_backend_herdr_projection_workspace_label_matches "$FM_BACKEND_HERDR_JOURNAL_WORKSPACE_LABEL" \
+    "$id" "$FM_BACKEND_HERDR_JOURNAL_PROJECTION_ID" \
     && [ "$FM_BACKEND_HERDR_JOURNAL_TASK_LABEL" = "$expected_task_label" ]
 }
 
@@ -765,9 +765,34 @@ fm_backend_herdr_projection_concise_task_label() {  # <task-id>
 # fm_backend_herdr_projection_workspace_label: presentation-only child label.
 # Format is literal U+2514 BOX DRAWINGS LIGHT UP AND RIGHT, one space, the
 # concise task label, then the unchanged · p:<full-22-char-token> suffix.
+# An optional crew name (bin/fm-crew-names.sh) is shown before the task label
+# as "└ <crew-name> · <task> · p:<token>".
 # Labels and tokens remain non-authoritative correlators only.
-fm_backend_herdr_projection_workspace_label() {  # <task-id> <projection-id>
-  printf '└ %s · p:%s' "$(fm_backend_herdr_projection_concise_task_label "$1")" "$2"
+fm_backend_herdr_projection_workspace_label() {  # <task-id> <projection-id> [<crew-name>]
+  if [ -n "${3:-}" ]; then
+    printf '└ %s · %s · p:%s' "$3" "$(fm_backend_herdr_projection_concise_task_label "$1")" "$2"
+  else
+    printf '└ %s · p:%s' "$(fm_backend_herdr_projection_concise_task_label "$1")" "$2"
+  fi
+}
+
+# fm_backend_herdr_projection_workspace_label_matches: true when <label> is
+# this task's presentation label, with or without a crew name, so labels
+# written before crew names existed keep verifying.
+fm_backend_herdr_projection_workspace_label_matches() {  # <label> <task-id> <projection-id>
+  local label=$1 bare name
+  bare=$(fm_backend_herdr_projection_workspace_label "$2" "$3")
+  [ "$label" = "$bare" ] && return 0
+  case "$label" in
+    "└ "*" · ${bare#└ }") ;;
+    *) return 1 ;;
+  esac
+  name=${label#└ }
+  name=${name%" · ${bare#└ }"}
+  case "$name" in
+    ''|*'·'*) return 1 ;;
+  esac
+  return 0
 }
 
 # fm_backend_herdr_presentation_session_lock_path: one account-private lock

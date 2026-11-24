@@ -263,6 +263,8 @@ Creation proceeds in this order:
 Another parent with the same presentation label does not prevent publication or participate in restart reclaim.
 
 The token is visible in the workspace title, because Herdr exposes no verified hidden persistent field.
+A ship or scout title is `└ <crew-name> · <concise-task> · p:<token>`, where the crew name is the task's `crew_name=` record from `bin/fm-crew-names.sh`.
+Titles written before crew names existed omit the name and still verify.
 Neither token, title, nor journal authorizes send, capture, task ownership, Treehouse return, or general recovery.
 
 ### Owning parent and tabs
@@ -415,7 +417,7 @@ Locked session start has one narrower cleanup for a restored projected child tha
 It runs only when the current home has at least one ordinary presentation journal, and it considers only that home.
 A primary never recursively sweeps a secondmate home.
 
-Discovery starts from the exact current `└ <concise-task> · p:<22-character-token>` grammar, but a title or token alone is never mutation authority.
+Discovery starts from the exact current `└ [<crew-name> · ]<concise-task> · p:<22-character-token>` grammar, but a title or token alone is never mutation authority.
 A candidate must meet all of these conditions:
 
 - The title must contain exactly one token occurrence across the named-session snapshot.
